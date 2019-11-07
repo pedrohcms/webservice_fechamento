@@ -19,6 +19,6 @@ def save_file(file):
 def process():
     data = request.get_json()
     
-    save_file(data.file)
+    save_file(data['file'])
     
     return jsonify([1, 2, 3])
