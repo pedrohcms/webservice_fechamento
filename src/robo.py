@@ -23,14 +23,8 @@ def save_file(file):
         print('O arquivo foi salvo com sucesso')
 
 def process():
-<<<<<<< HEAD
-    data = request.get_json()
     
-    save_file(data['file'])
-=======
-
     save_file(request.files['file'])
->>>>>>> master
     
     return jsonify([1, 2, 3])
 
