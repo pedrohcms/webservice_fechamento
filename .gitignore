@@ -1,0 +1,4 @@
+
+*.xlsx
+.vscode/settings.json
+*.pyc
