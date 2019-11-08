@@ -13,7 +13,10 @@ def save_file(file):
     if (ext not in app.config['ALLOWED_EXTENSIONS']):
         print('O arquivo não pode ser salvo, pois não tem o formato permitido')
     else:
-        os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+        if os.path.exists('C:\\file'):
+            print('Diretorio C:\\file existe')
+        else:
+            os.mkdir('C:\\file')
         print('O arquivo foi salvo com sucesso')
 
 def process():
