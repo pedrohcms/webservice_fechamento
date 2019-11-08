@@ -16,6 +16,6 @@ def post():
     print(content['name'])
     return 'JSON posted'
 
-@app.route('/fechamento', methods=['GET'])
+@app.route('/fechamento', methods=['POST'])
 def fechamento():
     return robo.process()
