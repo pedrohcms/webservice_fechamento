@@ -4,9 +4,10 @@ import os
 import pandas as pd
 import xlrd
 import os
-from datetime import date
+import datetime as dt
 from dateutil.parser import parse
 import time
+import json
 
 def save_file(file):
     
@@ -24,222 +25,234 @@ def save_file(file):
             os.mkdir(app.config['UPLOAD_FOLDER'])
         
         ExcelFile.to_excel(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
-        # file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
         print('O arquivo foi salvo com sucesso')
+
+    ValorRetorno = fechamento(ExcelFile)
+
+    return ValorRetorno
 
 def process():
     
-    save_file(request.files['file'])
+    ValorRetorno = save_file(request.files['file'])
+
+    print(type(ValorRetorno))
     
     return jsonify([1, 2, 3])
 
-def fechamento():
-    # -*- coding: utf8 -*-
-    #Author: Pedro Henrique Correa Mota da Silva
-    op = 1
+def fechamento(ExcelData):
 
-    while op == 1:
-        print('Digite 1 para processar arquivo excel')
-        print('Digite 0 para sair')
-        op = int(input())
+    df = pd.DataFrame(ExcelData, columns=['Empr', 'CL', 'Conta', 'Valor do Montante', 'Elemento PEP', 'Chv.ref.1',
+                                       'Data do Doc', 'Contrato', 'Data Lançamento', 'Denominação', 'Interface'])
+
+    StringLinha = ''
+    ValorRetorno = {}
+    BreakLoop = False
+
+    if not os.path.exists('files/resultados/'):
+        os.mkdir('files/resultados/')
+
+    f = open('files/resultados/'+'Outubro'+'_'+'.txt', "w")
+
+    #Começo a contar o tempo de execução
+    BeginTime = time.perf_counter()
+   
+    Linha = 0
+    for i in range(df.shape[0]):
         
-        if op == 1:
-            path = input('Digite o caminho do arquivo excel, com a extensão: \n')
-
-            if os.path.isfile(path) == False:
-                print('Arquivo não encontrado!')
-                continue
-            else:
-                print('Arquivo recebido com sucesso!')
-
-                resposta = input('A panilha foi ordenada de maneira crescente nos campos de interface e empresa, respectivamente Pressione S - SIM |N - NÃO?: ')
-
-                if resposta == 'N':
-                    print('Ordene as colunas primeiro e depois utilize o algoritmo')
-                    exit()
-                
-                sheet_name = input('Digite o nome da planilha: ')
-
-                try:
-                    document = pd.read_excel(path, sheet_name=sheet_name).astype(str)
-                except:
-                    print('A panilha desejada não foi encontrada!')
-                    continue
-
-                if os.path.isdir('./resultados') == False:
-                    os.mkdir('./resultados')
-
-                print('Iniciando o Processamento!')
-
-                #Criando o arquivo txt caso ele não exista
-                txt = open('./resultados/'+sheet_name+'_'+str(date.today().year)+'.txt', 'w')
-
-                #Iniciando os DataFrames
-                interface = document['Interface'].values.tolist()
-                empr = document['Empr'].values.tolist()
-                cl = document['CL'].values.tolist()
-                conta = document['Conta'].values.tolist()
-                montante = document['Valor do Montante'].values.tolist()
-                pep = document['Elemento PEP'].values.tolist()
-                chave_ref = document['Chv.ref.1'].values.tolist()
-                data_doc = document['Data do Doc'].values.tolist()
-                contrato = document['Contrato'].values.tolist()
-                data_lancamento = document['Data Lançamento'].values.tolist()
-                historico = document['Denominação'].values.tolist()
-
-                init_time = time.perf_counter()
-
-                for linha in range(document.shape[0]):
-                    string_linha = '&SdtTexto.Add(\''
-                    
-                    #empresa
-                    string = empr[linha]
-                    
-                    if len(string) > 5 or len(string) < 3:
-                        print('O valor do campo Empresa é inválido')
-                        break
-                    else:
-                        string = string.zfill(5)
-
-                    string_linha += string
-                    
-                    #Débito ou crédito(CL)
-                    string = cl[linha]
-
-                    if (string == 'C' or 'D') and len(string) == 1:
-                        string_linha += string
-                    else:
-                        print('O valor do campo CL é invalido')
-                        break
-
-                    #Conta contabil
-                    string = conta[linha]
-
-                    if len(string) != 10:
-                        print('O valor do campo Conta contábil é inválido')
-                        break
-
-                    string_linha += string
-
-                    #Montante
-                    string = montante[linha]
-
-                    if len(string) > 15:
-                        print('O valor do campo montante é inválido')
-                        break
-
-                    if '.' in string:
-                        string = string.split('.')
-                        
-                        if len(string[1]) == 1:
-                            string[1] += '0'
-                        
-                        string = string[0] + string[1]
-                        string = string.zfill(15)
-
-                    string_linha += string
-                    
-                    #PEP
-                    string = pep[linha]
-                    
-                    if len(string) == 15:
-                        string = string + ' ' * (23 - len(string)) 
-
-                        string_linha += string
-                    else:
-                        print('O valor do campo Elemento PEP é inválido')
-                        break
-                    
-                    #Chav. Ref. 1
-                    string = chave_ref[linha]
-                    
-                    if string == 'nan':
-                        string = ' ' * (12) 
-                    elif len(string) == 12:
-                        pass
-                    else:
-                        print('O valor do campo chave referência é inválido')
-                        break
-
-                    string_linha += string
-
-                    #Data Documento
-                    string = data_doc[linha]
-
-                    if len(string) != 10:
-                        print('O valor do campo data é inválido')
-                        break
-                    
-                    string = parse(string)
-                    string = format(string, "%Y%m%d")
-
-                    string_linha += string
-
-                    #Contrato
-                    string = contrato[linha]
-                    
-                    if len(string) <= 3 or len(string) > 6:
-                        print('O valor do campo contrato é inválido')
-                        break
-                    elif len(string) == 5:
-                        print('AVISO! O valor do campo contrato na linha: '+ str(linha) + ' tem 5 números')
-                    
-                    string = string.zfill(6)
-
-                    string_linha += string
-
-                    #Data do lançamento
-                    string = data_lancamento[linha]
-
-                    if len(string) != 10:
-                        print('O valor do campo data é inválido')
-                        break
-                    
-                    string = parse(string)
-                    string = format(string, "%d/%m/%Y")
-
-                    string_linha += string
-                    
-                    #Histórico(Denominação)
-                    string = historico[linha]
-
-                    if len(string) >= 50:
-                        string = string[0:50]
-                    else:
-                        string = string + ' ' * (50 - len(string))
-
-                    string_linha += string
-
-                    #Colocando o ')
-                    string_linha += '\')\n'
-
-                    if(len(string_linha) != 157):
-                        print('Erro na linha: '+str(linha)+' a quantidade de caracteres é diferente do tamanho obrigatório')
-
-                    #Hora de salvar no arquivo
-                    txt.write(string_linha)
-
-                    if linha < document.shape[0] - 1: 
-                        interface_atual = interface[linha]
-                        interface_prox = interface[linha+1]
-                        empr_atual = empr[linha]
-                        empr_prox = empr[linha+1]
-
-                        if (interface_atual != interface_prox) or (empr_atual != empr_prox):
-                            txt.write('Do \'Processar\'\n')
-                    
-                    print('Linha: '+str(linha))
-
-                end_time = time.perf_counter()
-
-                txt.write('Do \'Processar\'')
-
-                txt.close()
-
-                print('O tempo de execução foi '+ str(end_time - init_time) + ' segundos')
-
-        elif op == 0:
-            print('Saindo')
+        if (BreakLoop == True):
             break
-        else:
-            print('Opção inválida')
+        
+        print('Linha ', Linha)
+
+        if(Linha > 0):
+            f.write('\n')
+        
+        Linha += 1
+        
+        for j in range(df.shape[1]):
+            
+            #Empresa | 1º Column
+            if (j == 0):
+                Empr = str(df.iloc[i, j])
+                
+                if (len(Empr) < 4): 
+                    Empr = Empr.zfill(5)
+
+                    print('Aviso: A informação de empresa está menor que 4! Empresa: ', str(Empr))
+
+                    f.write("&SdtTexto.Add('" + Empr)
+                elif(len(Empr) == 4):
+                    Empr = Empr.zfill(5)
+
+                    f.write("&SdtTexto.Add('" + Empr)
+                else:
+                    BreakLoop = True
+                    print('Codigo da Empresa está com o tamanho errado! Tamanho: ' + str(len(Empr)))
+
+                StringLinha += Empr
+                    
+            #Credito ou Debito | 2º Column
+            elif(j == 1):
+                CD = str(df.iloc[i, j])
+                
+                if (len(CD) == 1):
+                    f.write(CD)
+                else:
+                    BreakLoop = True
+                    print('Informação de Crédito ou Débito com tamanho errado! Tamanho: ' + str(len(CD)))
+
+                StringLinha += CD
+
+            #Conta | 3º Column
+            elif(j == 2):
+                Conta = str(df.iloc[i, j])
+                
+                if (len(Conta) == 10):
+                    f.write(Conta)
+                else:
+                    BreakLoop = True
+                    print('Informação de Conta está com tamanho errado! Tamanho: ' + str(len(Conta)))
+
+                StringLinha += Conta
+
+            #Valor do Montante | 4º Column
+            elif(j == 3):
+                ValorDoMontante = float(str(df.iloc[i, j]))
+                
+                ValorDoMontante = '{0:.2f}'.format(ValorDoMontante)
+                
+                ValorDoMontante = str(ValorDoMontante).replace(".","").zfill(15)
+
+                if (len(ValorDoMontante) == 15):
+                    f.write(ValorDoMontante)
+                else:
+                    BreakLoop = True
+                    print('O valor do montante está com o tamanho errado! Tamanho: ' + str(len(ValorDoMontante)))
+
+                StringLinha += ValorDoMontante
+
+            #PEP | 5º Column
+            elif(j == 4):
+                PEP = str(df.iloc[i, j])
+                
+                if (len(PEP) == 15):
+                    PEP = PEP + '        '
+                    f.write(PEP)
+                else:
+                    BreakLoop = True
+                    print('A informação de PEP está com o tamanho errado! Tamanho: ' + str(len(PEP)))
+
+                StringLinha += PEP
+
+            #Chave Referencia | 6º Column
+            elif(j == 5):
+                ChaveRef = str(df.iloc[i, j])
+                
+                if (ChaveRef == 'nan'):
+                    ChaveRef = '            '
+                    f.write(ChaveRef)
+                elif (len(ChaveRef) == 12):
+                    f.write(ChaveRef)
+                elif (len(ChaveRef) < 12):
+                    ChaveRef = ChaveRef.ljust(12)
+                    f.write(ChaveRef)
+                    print('Aviso! A informação de ChaveRef está menor que 12! ChaveRef: ', str(ChaveRef))
+                else:
+                    BreakLoop = True
+                    print('A informação de Chave Ref. está com o tamanho errado! Tamanho: ' + str(len(ChaveRef)))
+
+                StringLinha += ChaveRef
+
+            #Data do Documento | 7º Column      
+            elif(j == 6):
+                DataDoDocumento = str(df.iloc[i, j])
+                #Atraso na velocidade da execução
+                DataDoDocumento = dt.datetime.strptime(DataDoDocumento, '%Y-%m-%d %H:%M:%S').strftime('%Y%m%d')
+                
+                if (len(DataDoDocumento) == 8):
+                    f.write(DataDoDocumento)
+                else:
+                    BreakLoop = True
+                    print('A informação da Data do Documento está com o tamanho errado! Tamanho: ' + str(len(DataDoDocumento)))
+
+                StringLinha += DataDoDocumento
+                    
+            #Contrato | 8º Column
+            elif(j == 7):
+                Contrato = str(df.iloc[i, j])
+                
+                if (len(Contrato) < 6):
+                    print('Aviso: A informação de contrato está menor que 6 - Contrato: ', Contrato)
+                    Contrato = Contrato.zfill(6)
+                    f.write(Contrato)
+                elif (len(Contrato) > 6):
+                    BreakLoop = True
+                    print('A informação de Contrato está menor que o normal! Tamanho: ', str(len(Contrato)))
+                else:
+                    f.write(Contrato)
+
+                StringLinha += Contrato
+            
+            #Data do Lançamento | 9º Column
+            elif(j == 8):
+                DataDoLancamento = str(df.iloc[i, j])
+                
+                DataDoLancamento = dt.datetime.strptime(DataDoLancamento, '%Y-%m-%d %H:%M:%S').strftime('%d/%m/%Y')
+                
+                if (len(DataDoLancamento) == 10):
+                    f.write(DataDoLancamento)
+                else:
+                    BreakLoop = True
+                    print('A informação de Data do Lancamento está errada! Tamanho: ', str(len(DataDoLancamento)))
+
+                StringLinha += DataDoLancamento
+
+            #Histórico | 10º Column
+            elif(j == 9):              
+                Historico = str(df.iloc[i, j])
+
+                QuotationMark = "')"
+
+                if (len(Historico) > 50):
+                    Historico = Historico.format(Historico, 50)
+                    Historico += QuotationMark
+                    print('Aviso! O tamanho da informação de historico veio maior que 50')
+                elif (len(Historico) == 50):
+                    Historico += QuotationMark
+                else:
+                    SpacesToFill = 52 - len(Historico)
+                    QuotationMark = QuotationMark.rjust(SpacesToFill)
+                    Historico += QuotationMark
+
+                if (len(Historico) == 52):
+                    f.write(Historico)
+                else:
+                    BreakLoop = True
+                    print('A informação de Histórico está errada! Tamanho: ', str(len(Historico)))
+
+                StringLinha += Historico
+
+            #Interface | 11º Column
+            elif(j == 10):
+                Interface = str(df.iloc[i, j])
+                Empr_OriginValue = str(df.iloc[i, 0]) 
+
+                ValorRetorno[Linha] = StringLinha 
+
+                if(Linha < df.shape[0]):
+                    NextInterface = str(df.iloc[i+1, j])
+                    NextEmpr      = str(df.iloc[i+1, 0])
+                    if(Interface != NextInterface) or (Empr_OriginValue != NextEmpr):
+                        f.write("\nDo 'Processar'")
+                        ValorRetorno['QuebraInterface'] = "Do 'Processar'"
+                elif(Linha == df.shape[0]):
+                    f.write("\nDo 'Processar'")
+                    ValorRetorno['QuebraInterface'] = "Do 'Processar'"
+                
+    f.close()
+    EndTime = time.perf_counter()
+    ProcessTime = EndTime - BeginTime
+    FormatTime = '{0:.2f}'.format(ProcessTime)
+
+    print('Tempo de processamento: ' + str(FormatTime) + ' segundos.')
+    return ValorRetorno
