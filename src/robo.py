@@ -12,6 +12,10 @@ def save_file(file):
     
     ext = file.filename.split('.')
     ext = ext[-1]
+
+    ExcelFile = pd.read_excel(file, sheet_name='Outubro')
+
+    ExcelFile = ExcelFile.sort_values(['Empr', 'Interface', 'Elemento PEP'])
     
     if (ext not in app.config['ALLOWED_EXTENSIONS']):
         print('O arquivo não pode ser salvo, pois não tem o formato permitido')
@@ -19,7 +23,8 @@ def save_file(file):
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.mkdir(app.config['UPLOAD_FOLDER'])
         
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+        ExcelFile.to_excel(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+        # file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
         print('O arquivo foi salvo com sucesso')
 
 def process():
