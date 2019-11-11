@@ -24,7 +24,7 @@ def save_file(file):
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.mkdir(app.config['UPLOAD_FOLDER'])
         
-        ExcelFile.to_excel(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
         print('O arquivo foi salvo com sucesso')
 
     ValorRetorno = fechamento(ExcelFile)
@@ -34,15 +34,13 @@ def save_file(file):
 def process():
     
     ValorRetorno = save_file(request.files['file'])
-
-    print(type(ValorRetorno))
     
     return jsonify([1, 2, 3])
 
 def fechamento(ExcelData):
 
     df = pd.DataFrame(ExcelData, columns=['Empr', 'CL', 'Conta', 'Valor do Montante', 'Elemento PEP', 'Chv.ref.1',
-                                       'Data do Doc', 'Contrato', 'Data Lançamento', 'Denominação', 'Interface'])
+                                       'Data do Doc', 'Contrato', 'Data Lançamento', 'Denominação', 'Interface']).astype("str")
 
     StringLinha = ''
     ValorRetorno = {}
@@ -73,7 +71,7 @@ def fechamento(ExcelData):
             
             #Empresa | 1º Column
             if (j == 0):
-                Empr = str(df.iloc[i, j])
+                Empr = df.iloc[i, j]
                 
                 if (len(Empr) < 4): 
                     Empr = Empr.zfill(5)
@@ -93,7 +91,7 @@ def fechamento(ExcelData):
                     
             #Credito ou Debito | 2º Column
             elif(j == 1):
-                CD = str(df.iloc[i, j])
+                CD = df.iloc[i, j]
                 
                 if (len(CD) == 1):
                     f.write(CD)
@@ -105,7 +103,7 @@ def fechamento(ExcelData):
 
             #Conta | 3º Column
             elif(j == 2):
-                Conta = str(df.iloc[i, j])
+                Conta = df.iloc[i, j]
                 
                 if (len(Conta) == 10):
                     f.write(Conta)
@@ -117,7 +115,7 @@ def fechamento(ExcelData):
 
             #Valor do Montante | 4º Column
             elif(j == 3):
-                ValorDoMontante = float(str(df.iloc[i, j]))
+                ValorDoMontante = float(df.iloc[i, j])
                 
                 ValorDoMontante = '{0:.2f}'.format(ValorDoMontante)
                 
@@ -133,7 +131,7 @@ def fechamento(ExcelData):
 
             #PEP | 5º Column
             elif(j == 4):
-                PEP = str(df.iloc[i, j])
+                PEP = df.iloc[i, j]
                 
                 if (len(PEP) == 15):
                     PEP = PEP + '        '
@@ -146,7 +144,7 @@ def fechamento(ExcelData):
 
             #Chave Referencia | 6º Column
             elif(j == 5):
-                ChaveRef = str(df.iloc[i, j])
+                ChaveRef = df.iloc[i, j]
                 
                 if (ChaveRef == 'nan'):
                     ChaveRef = '            '
@@ -165,9 +163,9 @@ def fechamento(ExcelData):
 
             #Data do Documento | 7º Column      
             elif(j == 6):
-                DataDoDocumento = str(df.iloc[i, j])
+                DataDoDocumento = df.iloc[i, j]
                 #Atraso na velocidade da execução
-                DataDoDocumento = dt.datetime.strptime(DataDoDocumento, '%Y-%m-%d %H:%M:%S').strftime('%Y%m%d')
+                DataDoDocumento = dt.datetime.strptime(DataDoDocumento, '%Y-%m-%d').strftime('%Y%m%d')
                 
                 if (len(DataDoDocumento) == 8):
                     f.write(DataDoDocumento)
@@ -179,7 +177,7 @@ def fechamento(ExcelData):
                     
             #Contrato | 8º Column
             elif(j == 7):
-                Contrato = str(df.iloc[i, j])
+                Contrato = df.iloc[i, j]
                 
                 if (len(Contrato) < 6):
                     print('Aviso: A informação de contrato está menor que 6 - Contrato: ', Contrato)
@@ -195,9 +193,9 @@ def fechamento(ExcelData):
             
             #Data do Lançamento | 9º Column
             elif(j == 8):
-                DataDoLancamento = str(df.iloc[i, j])
+                DataDoLancamento = df.iloc[i, j]
                 
-                DataDoLancamento = dt.datetime.strptime(DataDoLancamento, '%Y-%m-%d %H:%M:%S').strftime('%d/%m/%Y')
+                DataDoLancamento = dt.datetime.strptime(DataDoLancamento, '%Y-%m-%d').strftime('%d/%m/%Y')
                 
                 if (len(DataDoLancamento) == 10):
                     f.write(DataDoLancamento)
@@ -209,17 +207,24 @@ def fechamento(ExcelData):
 
             #Histórico | 10º Column
             elif(j == 9):              
-                Historico = str(df.iloc[i, j])
+                Historico = df.iloc[i, j]
 
                 QuotationMark = "')"
 
                 if (len(Historico) > 50):
                     Historico = Historico.format(Historico, 50)
+
+                    StringLinha += Historico
+
                     Historico += QuotationMark
                     print('Aviso! O tamanho da informação de historico veio maior que 50')
                 elif (len(Historico) == 50):
+                    StringLinha += Historico
+
                     Historico += QuotationMark
                 else:
+                    StringLinha += Historico
+
                     SpacesToFill = 52 - len(Historico)
                     QuotationMark = QuotationMark.rjust(SpacesToFill)
                     Historico += QuotationMark
@@ -230,14 +235,13 @@ def fechamento(ExcelData):
                     BreakLoop = True
                     print('A informação de Histórico está errada! Tamanho: ', str(len(Historico)))
 
-                StringLinha += Historico
-
             #Interface | 11º Column
             elif(j == 10):
-                Interface = str(df.iloc[i, j])
+                Interface = df.iloc[i, j]
                 Empr_OriginValue = str(df.iloc[i, 0]) 
 
                 ValorRetorno[Linha] = StringLinha 
+                StringLinha = ''
 
                 if(Linha < df.shape[0]):
                     NextInterface = str(df.iloc[i+1, j])
@@ -250,9 +254,16 @@ def fechamento(ExcelData):
                     ValorRetorno['QuebraInterface'] = "Do 'Processar'"
                 
     f.close()
+    
     EndTime = time.perf_counter()
     ProcessTime = EndTime - BeginTime
     FormatTime = '{0:.2f}'.format(ProcessTime)
+
+    # Mostrar os valores do dicionario | HAIL PYTHON 
+    for item, valor in ValorRetorno.items():
+        if item == 10:
+            break
+        print(item, valor)
 
     print('Tempo de processamento: ' + str(FormatTime) + ' segundos.')
     return ValorRetorno
