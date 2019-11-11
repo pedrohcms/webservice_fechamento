@@ -1,4 +1,4 @@
-# robo_fechamento
+# Formatação de valores em Excel para arquivo texto usando WebService com Python
 
 Esse é um projeto de automação com Python para o fechamento contábil de uma empresa. A princípio, o fechamento era feito manualmente editando uma 
 planilha em Excel formatando os valores para um arquivo em .txt de acordo com as regras impostas, depois foi utilizado um script em Python para fazer 
