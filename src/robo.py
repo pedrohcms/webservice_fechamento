@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, jsonify, json
 from server import app
 import os
 import pandas as pd
@@ -7,19 +7,22 @@ import os
 import datetime as dt
 from dateutil.parser import parse
 import time
-import json
+import base64
 
 def save_file(file):
     
     ext = file.filename.split('.')
     ext = ext[-1]
 
-    ExcelFile = pd.read_excel(file, sheet_name='Outubro')
+    try:
+        ExcelFile = pd.read_excel(file, sheet_name=request.form['aba'])
+    except:
+        return('A planilha desejada não foi encontrada')
 
     ExcelFile = ExcelFile.sort_values(['Empr', 'Interface', 'Elemento PEP'])
     
     if (ext not in app.config['ALLOWED_EXTENSIONS']):
-        print('O arquivo não pode ser salvo, pois não tem o formato permitido')
+        return('O arquivo não pode ser salvo, pois não tem o formato permitido')
     else:
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.mkdir(app.config['UPLOAD_FOLDER'])
@@ -35,7 +38,11 @@ def process():
     
     ValorRetorno = save_file(request.files['file'])
     
-    return jsonify([1, 2, 3])
+    response = str(ValorRetorno).encode()
+
+    response = base64.b64encode(response)
+    
+    return response
 
 def fechamento(ExcelData):
 
@@ -49,7 +56,7 @@ def fechamento(ExcelData):
     if not os.path.exists('files/resultados/'):
         os.mkdir('files/resultados/')
 
-    f = open('files/resultados/'+'Outubro'+'_'+'.txt', "w")
+    f = open('files/resultados/'+request.form['aba']+'.txt', "w")
 
     #Começo a contar o tempo de execução
     BeginTime = time.perf_counter()

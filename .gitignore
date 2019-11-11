@@ -1,6 +1,6 @@
 
-# *.xlsx
-# .vscode/settings.json
+ *.xlsx
+ .vscode/settings.json
 # *.pyc
 
 # Created by https://www.gitignore.io/api/python
@@ -115,3 +115,6 @@ dmypy.json
 
 # End of https://www.gitignore.io/api/python
 
+files/Ajuste Contabil FEchamento Toledo 2.xlsx
+files/Ajustes+Contabeis+Fechamento+-+Outubro - Copia.xlsx
+*.txt
