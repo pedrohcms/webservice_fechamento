@@ -1,3 +1,5 @@
 {
-    "python.pythonPath": "C:\\Program Files\\Python\\projeto-flask\\Scripts\\python.exe"
+    "python.pythonPath": "C:\\Program Files\\Python\\webservice_fechamento\\Scripts\\python.exe",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
 }
