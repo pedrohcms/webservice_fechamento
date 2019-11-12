@@ -50,7 +50,7 @@ def fechamento(ExcelData):
                                        'Data do Doc', 'Contrato', 'Data Lançamento', 'Denominação', 'Interface']).astype("str")
 
     StringLinha = ''
-    ValorRetorno = {}
+    ValorRetorno = []
     BreakLoop = False
 
     if not os.path.exists('files/resultados/'):
@@ -247,7 +247,7 @@ def fechamento(ExcelData):
                 Interface = df.iloc[i, j]
                 Empr_OriginValue = str(df.iloc[i, 0]) 
 
-                ValorRetorno[Linha] = StringLinha 
+                ValorRetorno.append(StringLinha)
                 StringLinha = ''
 
                 if(Linha < df.shape[0]):
@@ -255,10 +255,10 @@ def fechamento(ExcelData):
                     NextEmpr      = str(df.iloc[i+1, 0])
                     if(Interface != NextInterface) or (Empr_OriginValue != NextEmpr):
                         f.write("\nDo 'Processar'")
-                        ValorRetorno['QuebraInterface'] = "Do 'Processar'"
+                        ValorRetorno.append("Do 'Processar'")
                 elif(Linha == df.shape[0]):
                     f.write("\nDo 'Processar'")
-                    ValorRetorno['QuebraInterface'] = "Do 'Processar'"
+                    ValorRetorno.append("Do 'Processar'")
                 
     f.close()
     
@@ -266,11 +266,10 @@ def fechamento(ExcelData):
     ProcessTime = EndTime - BeginTime
     FormatTime = '{0:.2f}'.format(ProcessTime)
 
-    # Mostrar os valores do dicionario | HAIL PYTHON 
-    for item, valor in ValorRetorno.items():
-        if item == 10:
-            break
-        print(item, valor)
+    # Visualizando os valores do ValorRetorno
+    for valor in ValorRetorno[:10]:
+        print(valor)
+        print('Tamanho do valor: ', len(valor))
 
     print('Tempo de processamento: ' + str(FormatTime) + ' segundos.')
     return ValorRetorno
