@@ -255,10 +255,10 @@ def fechamento(ExcelData):
                     NextEmpr      = str(df.iloc[i+1, 0])
                     if(Interface != NextInterface) or (Empr_OriginValue != NextEmpr):
                         f.write("\nDo 'Processar'")
-                        ValorRetorno.append("Do 'Processar'")
+                        ValorRetorno.append("Do 'Processar'" + str(Linha))
                 elif(Linha == df.shape[0]):
                     f.write("\nDo 'Processar'")
-                    ValorRetorno.append("Do 'Processar'")
+                    ValorRetorno.append("Do 'Processar'" + str(Linha))
                 
     f.close()
     
