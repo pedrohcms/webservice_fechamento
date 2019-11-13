@@ -1,4 +1,4 @@
-from flask import request, jsonify, json
+from flask import request, Response
 from server import app
 import os
 import pandas as pd
@@ -8,11 +8,9 @@ import datetime as dt
 from dateutil.parser import parse
 import time
 import base64
+from dict2xml import dict2xml as xmlify
 
-def save_file(file):
-    
-    ext = file.filename.split('.')
-    ext = ext[-1]
+def process_file(file):
 
     try:
         ExcelFile = pd.read_excel(file, sheet_name=request.form['aba'])
@@ -21,28 +19,30 @@ def save_file(file):
 
     ExcelFile = ExcelFile.sort_values(['Empr', 'Interface', 'Elemento PEP'])
     
-    if (ext not in app.config['ALLOWED_EXTENSIONS']):
-        return('O arquivo não pode ser salvo, pois não tem o formato permitido')
-    else:
-        if not os.path.exists(app.config['UPLOAD_FOLDER']):
-            os.mkdir(app.config['UPLOAD_FOLDER'])
-        
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
-        print('O arquivo foi salvo com sucesso')
-
     ValorRetorno = fechamento(ExcelFile)
 
     return ValorRetorno
 
 def process():
     
-    ValorRetorno = save_file(request.files['file'])
-    
-    response = str(ValorRetorno).encode()
+    retorno = process_file(request.files['file'])
 
-    response = base64.b64encode(response)
+    xml = xmlify(retorno, indent="  ", )    
     
-    return response
+    string = ''
+
+    string += '<?xml version="1.0" encoding="UTF-8"?>\n'
+    string = '<schema>\n'
+    string += xml
+    string += '\n</schema>'
+    
+    retorno = string
+
+    file = open('files/teste.xml', 'w')
+    
+    file.write(retorno)
+        
+    return retorno
 
 def fechamento(ExcelData):
 
@@ -50,13 +50,10 @@ def fechamento(ExcelData):
                                        'Data do Doc', 'Contrato', 'Data Lançamento', 'Denominação', 'Interface']).astype("str")
 
     StringLinha = ''
-    ValorRetorno = []
+    ValorRetorno = {}
+    avisos = {}
+    erros = {}
     BreakLoop = False
-
-    if not os.path.exists('files/resultados/'):
-        os.mkdir('files/resultados/')
-
-    f = open('files/resultados/'+request.form['aba']+'.txt', "w")
 
     #Começo a contar o tempo de execução
     BeginTime = time.perf_counter()
@@ -68,9 +65,6 @@ def fechamento(ExcelData):
             break
         
         print('Linha ', Linha)
-
-        if(Linha > 0):
-            f.write('\n')
         
         Linha += 1
         
@@ -83,16 +77,14 @@ def fechamento(ExcelData):
                 if (len(Empr) < 4): 
                     Empr = Empr.zfill(5)
 
-                    print('Aviso: A informação de empresa está menor que 4! Empresa: ', str(Empr))
+                    avisos[Linha] = ('A informação de empresa está menor que 4! Empresa: ', str(Empr))
 
-                    f.write("&SdtTexto.Add('" + Empr)
                 elif(len(Empr) == 4):
                     Empr = Empr.zfill(5)
 
-                    f.write("&SdtTexto.Add('" + Empr)
                 else:
                     BreakLoop = True
-                    print('Codigo da Empresa está com o tamanho errado! Tamanho: ' + str(len(Empr)))
+                    erros[Linha] = ('Codigo da Empresa está com o tamanho errado! Tamanho: ' + str(len(Empr)))
 
                 StringLinha += Empr
                     
@@ -100,11 +92,9 @@ def fechamento(ExcelData):
             elif(j == 1):
                 CD = df.iloc[i, j]
                 
-                if (len(CD) == 1):
-                    f.write(CD)
-                else:
+                if (len(CD) != 1):
                     BreakLoop = True
-                    print('Informação de Crédito ou Débito com tamanho errado! Tamanho: ' + str(len(CD)))
+                    erros[Linha] = ('Informação de Crédito ou Débito com tamanho errado! Tamanho: ' + str(len(CD)))
 
                 StringLinha += CD
 
@@ -112,11 +102,9 @@ def fechamento(ExcelData):
             elif(j == 2):
                 Conta = df.iloc[i, j]
                 
-                if (len(Conta) == 10):
-                    f.write(Conta)
-                else:
+                if (len(Conta) != 10):
                     BreakLoop = True
-                    print('Informação de Conta está com tamanho errado! Tamanho: ' + str(len(Conta)))
+                    erros[Linha] = ('Informação de Conta está com tamanho errado! Tamanho: ' + str(len(Conta)))
 
                 StringLinha += Conta
 
@@ -128,12 +116,10 @@ def fechamento(ExcelData):
                 
                 ValorDoMontante = str(ValorDoMontante).replace(".","").zfill(15)
 
-                if (len(ValorDoMontante) == 15):
-                    f.write(ValorDoMontante)
-                else:
+                if (len(ValorDoMontante) != 15):
                     BreakLoop = True
-                    print('O valor do montante está com o tamanho errado! Tamanho: ' + str(len(ValorDoMontante)))
-
+                    erros[Linha] = ('O valor do montante está com o tamanho errado! Tamanho: ' + str(len(ValorDoMontante)))
+                
                 StringLinha += ValorDoMontante
 
             #PEP | 5º Column
@@ -141,11 +127,10 @@ def fechamento(ExcelData):
                 PEP = df.iloc[i, j]
                 
                 if (len(PEP) == 15):
-                    PEP = PEP + '        '
-                    f.write(PEP)
+                    PEP += '        '
                 else:
                     BreakLoop = True
-                    print('A informação de PEP está com o tamanho errado! Tamanho: ' + str(len(PEP)))
+                    erros[Linha] = ('A informação de PEP está com o tamanho errado! Tamanho: ' + str(len(PEP)))
 
                 StringLinha += PEP
 
@@ -155,30 +140,27 @@ def fechamento(ExcelData):
                 
                 if (ChaveRef == 'nan'):
                     ChaveRef = '            '
-                    f.write(ChaveRef)
+                    StringLinha += ChaveRef
                 elif (len(ChaveRef) == 12):
-                    f.write(ChaveRef)
+                    StringLinha += ChaveRef
                 elif (len(ChaveRef) < 12):
                     ChaveRef = ChaveRef.ljust(12)
-                    f.write(ChaveRef)
-                    print('Aviso! A informação de ChaveRef está menor que 12! ChaveRef: ', str(ChaveRef))
+                    StringLinha += ChaveRef
+                    avisos[Linha] = ('Aviso! A informação de ChaveRef está menor que 12! ChaveRef: ', str(ChaveRef))
                 else:
+                    StringLinha += ChaveRef
                     BreakLoop = True
-                    print('A informação de Chave Ref. está com o tamanho errado! Tamanho: ' + str(len(ChaveRef)))
-
-                StringLinha += ChaveRef
-
+                    erros[Linha] = ('A informação de Chave Ref. está com o tamanho errado! Tamanho: ' + str(len(ChaveRef)))
+                
             #Data do Documento | 7º Column      
             elif(j == 6):
                 DataDoDocumento = df.iloc[i, j]
                 #Atraso na velocidade da execução
                 DataDoDocumento = dt.datetime.strptime(DataDoDocumento, '%Y-%m-%d').strftime('%Y%m%d')
                 
-                if (len(DataDoDocumento) == 8):
-                    f.write(DataDoDocumento)
-                else:
+                if (len(DataDoDocumento) != 8):
                     BreakLoop = True
-                    print('A informação da Data do Documento está com o tamanho errado! Tamanho: ' + str(len(DataDoDocumento)))
+                    erros[Linha] = ('A informação da Data do Documento está com o tamanho errado! Tamanho: ' + str(len(DataDoDocumento)))
 
                 StringLinha += DataDoDocumento
                     
@@ -187,89 +169,89 @@ def fechamento(ExcelData):
                 Contrato = df.iloc[i, j]
                 
                 if (len(Contrato) < 6):
-                    print('Aviso: A informação de contrato está menor que 6 - Contrato: ', Contrato)
+                    avisos[Linha] = ('Aviso: A informação de contrato está menor que 6 - Contrato: ' + Contrato)
                     Contrato = Contrato.zfill(6)
-                    f.write(Contrato)
+                    StringLinha += Contrato
                 elif (len(Contrato) > 6):
+                    StringLinha += Contrato
                     BreakLoop = True
-                    print('A informação de Contrato está menor que o normal! Tamanho: ', str(len(Contrato)))
+                    erros[Linha] = ('A informação de Contrato está menor que o normal! Tamanho: ' + len(Contrato))
                 else:
-                    f.write(Contrato)
+                    StringLinha += Contrato
 
-                StringLinha += Contrato
-            
             #Data do Lançamento | 9º Column
             elif(j == 8):
                 DataDoLancamento = df.iloc[i, j]
                 
                 DataDoLancamento = dt.datetime.strptime(DataDoLancamento, '%Y-%m-%d').strftime('%d/%m/%Y')
                 
-                if (len(DataDoLancamento) == 10):
-                    f.write(DataDoLancamento)
-                else:
+                if (len(DataDoLancamento) != 10):
                     BreakLoop = True
-                    print('A informação de Data do Lancamento está errada! Tamanho: ', str(len(DataDoLancamento)))
-
+                    erros[Linha] = ('A informação de Data do Lancamento está errada! Tamanho: ' + str(len(DataDoLancamento)))
+                
                 StringLinha += DataDoLancamento
 
             #Histórico | 10º Column
             elif(j == 9):              
                 Historico = df.iloc[i, j]
 
-                QuotationMark = "')"
-
                 if (len(Historico) > 50):
                     Historico = Historico.format(Historico, 50)
 
                     StringLinha += Historico
+                    avisos[Linha] = ('Aviso! O tamanho da informação de historico veio maior que 50')
 
-                    Historico += QuotationMark
-                    print('Aviso! O tamanho da informação de historico veio maior que 50')
+                elif (len(Historico) < 50):
+                    SpacesToFill = 50 - len(Historico)
+                    Historico += ' ' * SpacesToFill
+                    StringLinha += Historico
+                
                 elif (len(Historico) == 50):
                     StringLinha += Historico
-
-                    Historico += QuotationMark
+                
                 else:
-                    StringLinha += Historico
-
-                    SpacesToFill = 52 - len(Historico)
-                    QuotationMark = QuotationMark.rjust(SpacesToFill)
-                    Historico += QuotationMark
-
-                if (len(Historico) == 52):
-                    f.write(Historico)
-                else:
-                    BreakLoop = True
-                    print('A informação de Histórico está errada! Tamanho: ', str(len(Historico)))
+                    avisos[Linha] = ('Aviso! O tamanho da informação de historico está com tamanho errado: ' + 
+                            'Empresa:' + Empr + 'Contrato:' + Contrato + 'Historico:' + Historico)
 
             #Interface | 11º Column
             elif(j == 10):
                 Interface = df.iloc[i, j]
                 Empr_OriginValue = str(df.iloc[i, 0]) 
-
-                ValorRetorno.append(StringLinha)
+                
+                ValorRetorno[Linha] = StringLinha
                 StringLinha = ''
 
                 if(Linha < df.shape[0]):
                     NextInterface = str(df.iloc[i+1, j])
                     NextEmpr      = str(df.iloc[i+1, 0])
                     if(Interface != NextInterface) or (Empr_OriginValue != NextEmpr):
-                        f.write("\nDo 'Processar'")
-                        ValorRetorno.append("Do 'Processar'" + str(Linha))
+                        Linha += 1
+                        ValorRetorno[Linha] = "Do 'Processar'"
                 elif(Linha == df.shape[0]):
-                    f.write("\nDo 'Processar'")
-                    ValorRetorno.append("Do 'Processar'" + str(Linha))
-                
-    f.close()
+                    Linha += 1
+                    ValorRetorno[Linha] = "Do 'Processar'"
     
     EndTime = time.perf_counter()
     ProcessTime = EndTime - BeginTime
     FormatTime = '{0:.2f}'.format(ProcessTime)
 
     # Visualizando os valores do ValorRetorno
-    for valor in ValorRetorno[:10]:
-        print(valor)
-        print('Tamanho do valor: ', len(valor))
-
+    count = 0
+    for chave, valor in ValorRetorno.items():
+        if count == 10:
+            print(chave, valor)
+            break
+        else:
+            print(chave, valor)
+            count += 1
+    
     print('Tempo de processamento: ' + str(FormatTime) + ' segundos.')
+
+    ValorRetorno[-1] = avisos
+    ValorRetorno[-2] = erros
+    
+    file = open('files/result.txt', 'w')
+    
+    file.write(str(ValorRetorno))
+
     return ValorRetorno
