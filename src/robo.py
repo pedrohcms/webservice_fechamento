@@ -53,6 +53,7 @@ def fechamento(ExcelData):
     ValorRetorno = {}
     avisos = {}
     erros = {}
+    texto_formatado = {}
     BreakLoop = False
 
     #Começo a contar o tempo de execução
@@ -218,7 +219,7 @@ def fechamento(ExcelData):
                 Interface = df.iloc[i, j]
                 Empr_OriginValue = str(df.iloc[i, 0]) 
                 
-                ValorRetorno[Linha] = StringLinha
+                texto_formatado[Linha] = StringLinha
                 StringLinha = ''
 
                 if(Linha < df.shape[0]):
@@ -226,10 +227,10 @@ def fechamento(ExcelData):
                     NextEmpr      = str(df.iloc[i+1, 0])
                     if(Interface != NextInterface) or (Empr_OriginValue != NextEmpr):
                         Linha += 1
-                        ValorRetorno[Linha] = "Do 'Processar'"
+                        texto_formatado[Linha] = "Do 'Processar'"
                 elif(Linha == df.shape[0]):
                     Linha += 1
-                    ValorRetorno[Linha] = "Do 'Processar'"
+                    texto_formatado[Linha] = "Do 'Processar'"
     
     EndTime = time.perf_counter()
     ProcessTime = EndTime - BeginTime
@@ -247,6 +248,7 @@ def fechamento(ExcelData):
     
     print('Tempo de processamento: ' + str(FormatTime) + ' segundos.')
 
+    ValorRetorno[1]  = texto_formatado
     ValorRetorno[-1] = avisos
     ValorRetorno[-2] = erros
     
