@@ -9,6 +9,7 @@ from dateutil.parser import parse
 import time
 import base64
 from dict2xml import dict2xml as xmlify
+import json
 
 def process_file(file):
 
@@ -27,22 +28,13 @@ def process():
     
     retorno = process_file(request.files['file'])
 
-    xml = xmlify(retorno, indent="  ", )    
-    
-    string = ''
+    retorno = json.dumps(retorno)
 
-    string += '<?xml version="1.0" encoding="UTF-8"?>\n'
-    string = '<schema>\n'
-    string += xml
-    string += '\n</schema>'
-    
-    retorno = string
-
-    file = open('files/teste.xml', 'w')
+    file = open('files/teste.json', 'w')
     
     file.write(retorno)
         
-    return retorno
+    return Response(retorno, mimetype='application/json')
 
 def fechamento(ExcelData):
 
@@ -248,12 +240,8 @@ def fechamento(ExcelData):
     
     print('Tempo de processamento: ' + str(FormatTime) + ' segundos.')
 
-    ValorRetorno[1]  = texto_formatado
-    ValorRetorno[-1] = avisos
-    ValorRetorno[-2] = erros
-    
-    file = open('files/result.txt', 'w')
-    
-    file.write(str(ValorRetorno))
+    ValorRetorno['texto_formatado']  = texto_formatado
+    ValorRetorno['avisos'] = avisos
+    ValorRetorno['erros'] = erros
 
     return ValorRetorno
