@@ -43,9 +43,9 @@ def fechamento(ExcelData):
 
     StringLinha = ''
     ValorRetorno = {}
-    avisos = {}
-    erros = {}
-    texto_formatado = {}
+    avisos = []
+    erros = []
+    texto_formatado = []
     BreakLoop = False
 
     #Começo a contar o tempo de execução
@@ -70,14 +70,14 @@ def fechamento(ExcelData):
                 if (len(Empr) < 4): 
                     Empr = Empr.zfill(5)
 
-                    avisos[Linha] = ('A informação de empresa está menor que 4! Empresa: ', str(Empr))
+                    avisos.append('A informação de empresa está menor que 4! Empresa: ' + str(Empr))
 
                 elif(len(Empr) == 4):
                     Empr = Empr.zfill(5)
 
                 else:
                     BreakLoop = True
-                    erros[Linha] = ('Codigo da Empresa está com o tamanho errado! Tamanho: ' + str(len(Empr)))
+                    erros.append('Codigo da Empresa está com o tamanho errado! Tamanho: ' + str(len(Empr)))
 
                 StringLinha += Empr
                     
@@ -87,7 +87,7 @@ def fechamento(ExcelData):
                 
                 if (len(CD) != 1):
                     BreakLoop = True
-                    erros[Linha] = ('Informação de Crédito ou Débito com tamanho errado! Tamanho: ' + str(len(CD)))
+                    erros.append('Informação de Crédito ou Débito com tamanho errado! Tamanho: ' + str(len(CD)))
 
                 StringLinha += CD
 
@@ -97,7 +97,7 @@ def fechamento(ExcelData):
                 
                 if (len(Conta) != 10):
                     BreakLoop = True
-                    erros[Linha] = ('Informação de Conta está com tamanho errado! Tamanho: ' + str(len(Conta)))
+                    erros.append('Informação de Conta está com tamanho errado! Tamanho: ' + str(len(Conta)))
 
                 StringLinha += Conta
 
@@ -111,7 +111,7 @@ def fechamento(ExcelData):
 
                 if (len(ValorDoMontante) != 15):
                     BreakLoop = True
-                    erros[Linha] = ('O valor do montante está com o tamanho errado! Tamanho: ' + str(len(ValorDoMontante)))
+                    erros.append('O valor do montante está com o tamanho errado! Tamanho: ' + str(len(ValorDoMontante)))
                 
                 StringLinha += ValorDoMontante
 
@@ -123,7 +123,7 @@ def fechamento(ExcelData):
                     PEP += '        '
                 else:
                     BreakLoop = True
-                    erros[Linha] = ('A informação de PEP está com o tamanho errado! Tamanho: ' + str(len(PEP)))
+                    erros.append('A informação de PEP está com o tamanho errado! Tamanho: ' + str(len(PEP)))
 
                 StringLinha += PEP
 
@@ -139,11 +139,11 @@ def fechamento(ExcelData):
                 elif (len(ChaveRef) < 12):
                     ChaveRef = ChaveRef.ljust(12)
                     StringLinha += ChaveRef
-                    avisos[Linha] = ('Aviso! A informação de ChaveRef está menor que 12! ChaveRef: ', str(ChaveRef))
+                    avisos.append('Aviso! A informação de ChaveRef está menor que 12! ChaveRef: ' + str(ChaveRef))
                 else:
                     StringLinha += ChaveRef
                     BreakLoop = True
-                    erros[Linha] = ('A informação de Chave Ref. está com o tamanho errado! Tamanho: ' + str(len(ChaveRef)))
+                    erros.append('A informação de Chave Ref. está com o tamanho errado! Tamanho: ' + str(len(ChaveRef)))
                 
             #Data do Documento | 7º Column      
             elif(j == 6):
@@ -153,7 +153,7 @@ def fechamento(ExcelData):
                 
                 if (len(DataDoDocumento) != 8):
                     BreakLoop = True
-                    erros[Linha] = ('A informação da Data do Documento está com o tamanho errado! Tamanho: ' + str(len(DataDoDocumento)))
+                    erros.append('A informação da Data do Documento está com o tamanho errado! Tamanho: ' + str(len(DataDoDocumento)))
 
                 StringLinha += DataDoDocumento
                     
@@ -162,13 +162,13 @@ def fechamento(ExcelData):
                 Contrato = df.iloc[i, j]
                 
                 if (len(Contrato) < 6):
-                    avisos[Linha] = ('Aviso: A informação de contrato está menor que 6 - Contrato: ' + Contrato)
+                    avisos.append('Aviso: A informação de contrato está menor que 6 - Contrato: ' + Contrato)
                     Contrato = Contrato.zfill(6)
                     StringLinha += Contrato
                 elif (len(Contrato) > 6):
                     StringLinha += Contrato
                     BreakLoop = True
-                    erros[Linha] = ('A informação de Contrato está menor que o normal! Tamanho: ' + len(Contrato))
+                    erros.append('A informação de Contrato está menor que o normal! Tamanho: ' + len(Contrato))
                 else:
                     StringLinha += Contrato
 
@@ -180,7 +180,7 @@ def fechamento(ExcelData):
                 
                 if (len(DataDoLancamento) != 10):
                     BreakLoop = True
-                    erros[Linha] = ('A informação de Data do Lancamento está errada! Tamanho: ' + str(len(DataDoLancamento)))
+                    erros.append('A informação de Data do Lancamento está errada! Tamanho: ' + str(len(DataDoLancamento)))
                 
                 StringLinha += DataDoLancamento
 
@@ -192,7 +192,7 @@ def fechamento(ExcelData):
                     Historico = Historico.format(Historico, 50)
 
                     StringLinha += Historico
-                    avisos[Linha] = ('Aviso! O tamanho da informação de historico veio maior que 50')
+                    avisos.append('Aviso! O tamanho da informação de historico veio maior que 50, Historico: ' + Historico)
 
                 elif (len(Historico) < 50):
                     SpacesToFill = 50 - len(Historico)
@@ -203,7 +203,7 @@ def fechamento(ExcelData):
                     StringLinha += Historico
                 
                 else:
-                    avisos[Linha] = ('Aviso! O tamanho da informação de historico está com tamanho errado: ' + 
+                    avisos.append('Aviso! O tamanho da informação de historico está com tamanho errado: ' + 
                             'Empresa:' + Empr + 'Contrato:' + Contrato + 'Historico:' + Historico)
 
             #Interface | 11º Column
@@ -211,7 +211,7 @@ def fechamento(ExcelData):
                 Interface = df.iloc[i, j]
                 Empr_OriginValue = str(df.iloc[i, 0]) 
                 
-                texto_formatado[Linha] = StringLinha
+                texto_formatado.append(StringLinha)
                 StringLinha = ''
 
                 if(Linha < df.shape[0]):
@@ -219,10 +219,10 @@ def fechamento(ExcelData):
                     NextEmpr      = str(df.iloc[i+1, 0])
                     if(Interface != NextInterface) or (Empr_OriginValue != NextEmpr):
                         Linha += 1
-                        texto_formatado[Linha] = "Do 'Processar'"
+                        texto_formatado.append("Do 'Processar'")
                 elif(Linha == df.shape[0]):
                     Linha += 1
-                    texto_formatado[Linha] = "Do 'Processar'"
+                    texto_formatado.append("Do 'Processar'")
     
     EndTime = time.perf_counter()
     ProcessTime = EndTime - BeginTime
