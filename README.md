@@ -10,7 +10,8 @@ O script passou por várias modificações para que fosse otimizado, e agora est
 * Python 3.7.x                    
 * Flask                           
 * Pip                             
-* Virtualenv       
+* Virtualenv
+* Pandas
   
 ## Motivo
 Antes o processo era feito manualmente e demandava muito tempo para ser feito, além de a validação não ser muito assertiva.
