@@ -8,8 +8,11 @@
 </head>
 <body>
     <form>
-        <input type="text" id="aba" name="aba"><br>
-        <input type="file" id="file" name="file"><br><br>
+        <h2>1º Key</h2>
+            <input type="text" id="aba" name="aba"><br>
+
+        <h2>2º Key</h2>
+            <input type="file" id="file" name="file"><br>
     </form>
     
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -34,8 +37,11 @@
             })
         }
     </script>
+    <br>
     <button onclick="send()">
-        Give Post em All
+        POST
     </button>
+
+    <p>See yor browser console to view results</p>
 </body>
 </html>
