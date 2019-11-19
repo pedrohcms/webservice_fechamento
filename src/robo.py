@@ -37,7 +37,7 @@ def process():
     return Response(retorno, mimetype='application/json')
 
 def fechamento(ExcelData):
-
+    
     df = pd.DataFrame(ExcelData, columns=['Empr', 'CL', 'Conta', 'Valor do Montante', 'Elemento PEP', 'Chv.ref.1',
                                        'Data do Doc', 'Contrato', 'Data Lançamento', 'Denominação', 'Interface']).astype("str")
 
