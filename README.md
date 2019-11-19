@@ -13,6 +13,7 @@ O script passou por várias modificações para que fosse otimizado, e agora foi
 * Virtualenv
 * Pandas
 * Axios
+* Javascript
   
 ## Motivo
 Antes o processo era feito manualmente e demandava muito tempo para ser feito, além de a validação não ser muito assertiva.
@@ -32,7 +33,7 @@ As informações são enviadas para a rota */fechamento* onde é verificado as i
 
 Para testes é necessario executar o comando abaixo:
 ```python
-python .\run.py
+python run.py
 ```
 que irá inicializar o servidor local pelo implantado pelo *Flask*.
 
