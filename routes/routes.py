@@ -1,12 +1,12 @@
 from server import app
-from flask import request
+from flask import request, render_template
 import importlib
 
 robo = importlib.import_module('src.robo')
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
-    return "Hello World"
+    return render_template("index.html")
 
 @app.route('/postjson', methods=['POST'])
 def post():

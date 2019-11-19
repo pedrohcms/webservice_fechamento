@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <form>
+        <input type="text" id="aba" name="aba"><br>
+        <input type="file" id="file" name="file"><br><br>
+    </form>
+    
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        function send() {
+            var formData = new FormData();
+            var aba = document.querySelector('#aba');
+            var file = document.querySelector('#file');
+            
+            formData.append('aba', aba.value);
+            formData.append('file', file.files[0]);
+
+            axios.post("http://127.0.0.1:5000/fechamento", formData,
+            {
+                headers: {'Content-Type': 'multipart/form-data'}
+            })
+            .then(response => {
+                console.log(response.data)
+            })
+            .catch(error => {
+                console.log(error)
+            })
+        }
+    </script>
+    <button onclick="send()">
+        Give Post em All
+    </button>
+</body>
+</html>
