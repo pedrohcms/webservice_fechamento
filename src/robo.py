@@ -7,8 +7,6 @@ import os
 import datetime as dt
 from dateutil.parser import parse
 import time
-import base64
-from dict2xml import dict2xml as xmlify
 import json
 
 def process_file(file):
@@ -30,10 +28,13 @@ def process():
 
     retorno = json.dumps(retorno)
 
-    file = open('files/teste.json', 'w')
+    if not os.path.isdir('files'):
+        os.mkdir('files')
+
+    file = open(os.path.join('files', 'teste.json'), 'w')
     
     file.write(retorno)
-        
+    
     return Response(retorno, mimetype='application/json')
 
 def fechamento(ExcelData):
