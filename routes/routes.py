@@ -1,6 +1,6 @@
+import importlib
 from server import app
 from flask import request, render_template
-import importlib
 
 robo = importlib.import_module('src.robo')
 

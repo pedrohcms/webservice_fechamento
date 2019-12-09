@@ -3,7 +3,6 @@ from server import app
 import os
 import pandas as pd
 import xlrd
-import os
 import datetime as dt
 from dateutil.parser import parse
 import time
@@ -34,6 +33,8 @@ def process():
     file = open(os.path.join('files', 'teste.json'), 'w')
     
     file.write(retorno)
+
+    file.close()
     
     return Response(retorno, mimetype='application/json')
 
